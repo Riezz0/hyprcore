@@ -1,5 +1,4 @@
 #!/bin/bash
-bash /home/$USER/dots/yay.sh &
 
 yay -S --needed --noconfirm \
     swww qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
@@ -12,7 +11,6 @@ yay -S --needed --noconfirm \
     xfce-polkit exa libreoffice-fresh rofi-wayland neovim goverlay-git \
     flatpak python-pywal16 python-pywalfox make linux-firmware dkms \
     automake linux-zen-headers kvantum-qt5 chromium \
-)
 
 mkdir -p ~/git ~/venv /home/$USER/tmp/
 sudo mkdir -p /etc/modules-load.d/
