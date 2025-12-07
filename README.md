@@ -1,4 +1,4 @@
-# hypr_cachyOS
+# hyprcore
 
 # Installation:
 
