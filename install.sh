@@ -67,6 +67,8 @@ ln -s /home/$USER/dots/.icons/ /home/$USER/
 ln -s /home/$USER/dots/.themes/ /home/$USER/
 ln -s /home/$USER/dots/dunst/ /home/$USER/.config/
 
+rm  /home/$USER/.config/hypr/monitors.conf
+
 sudo rm -rf /usr/share/icons/default
 sudo cp -r /home/$USER/dots/sys/cursors/default /usr/share/icons/
 sudo cp -r /home/$USER/dots/sys/cursors/oreo_white_cursors /usr/share/icons/
@@ -92,6 +94,15 @@ sudo cp -r /home/$USER/dots/sys/sddm/tokyo-night/ /usr/share/sddm/themes/
 sudo cp -r /home/$USER/dots/sys/grub/grub /etc/default/
 sudo cp -r /home/$USER/dots/sys/grub/tokyo-night /usr/share/grub/themes/
 sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+echo "🚀 Launching nwg-displays for display configuration..."
+echo "📺 Please set up your monitors in the nwg-displays window."
+echo "❌ Close the nwg-displays window when you're done to continue..."
+echo ""
+nwg-displays
+
+# This line only runs AFTER nwg-displays is closed
+echo "✅ Display configuration saved! Continuing with setup..."
 
 bash /home/$USER/dots/reboot.sh
 
