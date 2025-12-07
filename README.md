@@ -23,4 +23,6 @@ This is still a W.I.P 😊
 4. Ensure you install SDDM greeter in your arch install.
 5. Install pywalfox for Firefox Theming.
 6. Hardware Used - AMD CPU And GPU.
+7. Please be patient, installtion can take anywhere from 15 minutes upwards 
+depending on your specs
 

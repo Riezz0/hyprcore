@@ -11,7 +11,7 @@ yay -S --needed --noconfirm \
     xfce-polkit exa libreoffice-fresh rofi-wayland neovim goverlay-git \
     flatpak python-pywal16 python-pywalfox make linux-firmware dkms \
     automake linux-zen-headers kvantum-qt5 chromium nemo-fileroller \
-    waybar-module-pacman-updates-git \
+    waybar-module-pacman-updates-git coolercontrol-bin\
 
 mkdir -p ~/git ~/venv /home/$USER/tmp/
 sudo mkdir -p /etc/modules-load.d/
@@ -42,6 +42,7 @@ cp -r /home/$USER/dots/tmp/zsh-syntax-highlighting/ ~/.oh-my-zsh/custom/plugins/
 git clone https://github.com/Fred78290/nct6687d /home/$USER/tmp/nct6687d
 cd /home/$USER/tmp/nct6687d/
 make dkms/install
+sudo systemctl enable --now coolercontrold
 sudo cp -r /home/$USER/dots/sys/no_nct6683.conf /etc/modprobe.d/
 sudo cp -r /home/$USER/dots/sys/nct6687.conf /etc/modules-load.d/nct6687.conf
 sudo modprobe nct6687
