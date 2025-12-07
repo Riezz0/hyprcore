@@ -1,0 +1,6 @@
+//Audio///////////////////////////////////////////////////////////////////////////////////////////////////|
+{"pulseaudio": {"format": "VOL:{volume}%", "format-muted": "Audio Muted", "tooltip": true,           /////|
+"on-click": "bash ~/.config/scripts/pavu.sh",                                                        /////|
+"tooltip-format": "Power-Menu\nLeft Click To Open PavuControl\nLeft Click Again To Close" }},        /////|
+//////////////////////////////////////////////////////////////////////////////////////////////////////////|
+

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=oomox-Tokyo-Night
+Comment=Generated with Themix Base16 plugin
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+Name=oomox-Tokyo-Night
+GtkTheme=oomox-Tokyo-Night
+IconTheme=oomox-Tokyo-Night
+MetacityTheme=oomox-Tokyo-Night

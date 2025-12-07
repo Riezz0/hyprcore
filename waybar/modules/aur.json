@@ -1,0 +1,12 @@
+/////AUR//////////////////////////////////////////////////////////////////////////////////////////////////|
+{"custom/aur": {										                                                                 /////|
+"format": "{} {icon}",    										                                                       /////|
+"return-type": "json",										                                                           /////|
+"format-icons": {											                                                               /////|
+"has-updates": "Update/s Available",							                                                   /////|
+"updated": "Updates"},								                                                               /////|
+"on-click": "~/.config/scripts/updates.sh",								                                           /////|
+"exec-if": "which waybar-module-pacman-updates",							                                       /////|
+"exec": "waybar-module-pacman-updates --interval-seconds 5 --network-interval-seconds 300"}},		     /////|
+//////////////////////////////////////////////////////////////////////////////////////////////////////////|
+

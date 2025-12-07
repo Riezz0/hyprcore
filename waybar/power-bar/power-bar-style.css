@@ -1,0 +1,78 @@
+@import "../../../.cache/wal/colors-waybar.css";
+
+* {
+    font-family: MesloLGL Nerd Font Propo;
+    font-size: 13px;
+}
+
+window#waybar {
+  background-color: alpha(@background, 0.4);
+  color: @foreground;
+  transition-property: background-color;
+  transition-duration: 0.5s;
+  border-radius: 0px 0px 0px 0px;
+  transition-duration: .5s;
+  border-bottom: 2px solid @color8;
+  border-top: 2px solid @color8;
+  border-left: 2px solid @color8;
+  border-right: 2px solid @color8;
+
+}
+
+#custom-shutdown{
+    border-radius: 0px;
+    background-color: alpha(@background, 0.65);
+    color: @color1;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-left: 45px;
+    padding-right: 45px;
+    border-radius: 0px;
+    box-shadow: 2px 2px 2px 0px rgba(0,0,0,0.6);
+    border-bottom-width: 4px;
+    border-bottom-color: alpha(@color1, 1);
+    border-bottom-style: solid;
+}
+
+#custom-restart{
+    border-radius: 0px;
+    background-color: alpha(@background, 0.65);
+    color: @color2;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-left: 45px;
+    padding-right: 45px;
+    border-radius: 0px;
+    box-shadow: 2px 2px 2px 0px rgba(0,0,0,0.6);
+    border-bottom-width: 4px;
+    border-bottom-color: alpha(@color2, 1);
+    border-bottom-style: solid;
+}
+
+#custom-lock{
+    border-radius: 0px;
+    background-color: alpha(@background, 0.65);
+    color: @color3;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-left: 45px;
+    padding-right: 45px;
+    border-radius: 0px;
+    box-shadow: 2px 2px 2px 0px rgba(0,0,0,0.6);
+    border-bottom-width: 4px;
+    border-bottom-color: alpha(@color3, 1);
+    border-bottom-style: solid;
+}
+
