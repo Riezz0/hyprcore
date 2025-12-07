@@ -1,12 +1,12 @@
 # hyprcore
 
-# Install YAY
+# 1. Install YAY
 
 ```bash
 sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si
 ```
 
-# Installation:
+# 2. DotFiles Installation:
 
 ```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/Riezz0/hyprcore/refs/heads/main/get-repo.sh)"
@@ -19,8 +19,8 @@ the installation may continue
 
 This is still a W.I.P 😊
 
-1. This setup might not be compatible with your setup. 
-2. Ensure you install SDDM greeter in your arch install.
-3. Install pywalfox for Firefox Theming.
-4. Hardware Used - AMD CPU And GPU.
+3. This setup might not be compatible with your setup. 
+4. Ensure you install SDDM greeter in your arch install.
+5. Install pywalfox for Firefox Theming.
+6. Hardware Used - AMD CPU And GPU.
 
