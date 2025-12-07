@@ -3,14 +3,14 @@
 yay -S --needed --noconfirm \
     swww qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
     hypridle hyprlock hyprpicker tree qt5ct qt6ct qt5-styleplugins \
-    wl-clipboard firefox code neemo vlc nwg-look gnome-disk-utility \
+    wl-clipboard firefox code nemo vlc nwg-look gnome-disk-utility \
     nwg-displays zsh ttf-meslo-nerd ttf-font-awesome ttf-font-awesome-4 \
     ttf-font-awesome-5 waybar rust cargo fastfetch cmatrix pavucontrol \
     net-tools python-pip python-psutil python-virtualenv python-requests \
     python-hijri-converter python-pytz python-gobject xfce4-settings \
     xfce-polkit exa libreoffice-fresh rofi-wayland neovim goverlay-git \
     flatpak python-pywal16 python-pywalfox make linux-firmware dkms \
-    automake linux-zen-headers kvantum-qt5 chromium \
+    automake linux-zen-headers kvantum-qt5 chromium nemo-fileroller\
 
 mkdir -p ~/git ~/venv /home/$USER/tmp/
 sudo mkdir -p /etc/modules-load.d/

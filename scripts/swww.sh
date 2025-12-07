@@ -4,7 +4,7 @@
 # Sets wallpaper with transitions and error handling
 
 USER=$(whoami)
-WALLPAPER_DIR="/home/$USER/wallpapers"
+WALLPAPER_DIR="/home/$USER/.config/wallpapers"
 LOG_FILE="/home/$USER/.swww-wallpaper.log"
 
 # Logging function
