@@ -83,6 +83,27 @@ install_packages() {
     log_success "Package installation completed: $installed new, $skipped already installed, $failed failed"
 }
 
+# Function to ask for user confirmation
+ask_confirm() {
+    local prompt="$1"
+    local default="${2:-n}"
+    
+    if [[ "$default" == "y" ]]; then
+        prompt="$prompt [Y/n]: "
+    else
+        prompt="$prompt [y/N]: "
+    fi
+    
+    read -rp "$prompt" response
+    response="${response:-$default}"
+    
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Start installation
 echo -e "${CYAN}========================================${NC}"
 echo -e "${PURPLE}    Dotfiles Installation Script${NC}"
@@ -107,7 +128,7 @@ else
     log_success "yay already installed"
 fi
 
-# Define packages to install - ADDED coolercontrol
+# Define packages to install
 PACKAGES=(
     swww qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects
     hypridle hyprlock hyprpicker tree qt5ct qt6ct qt5-styleplugins
@@ -125,27 +146,76 @@ PACKAGES=(
 # Install packages
 install_packages "${PACKAGES[@]}"
 
-# Install coolercontrol if not already installed
-log_step "Checking for CoolerControl..."
-if ! is_package_installed "coolercontrol"; then
-    log_substep "CoolerControl not found, installing from AUR..."
-    if yay -S --needed --noconfirm coolercontrol &>/dev/null; then
-        log_success "CoolerControl installed"
-    else
-        log_warning "Failed to install CoolerControl from AUR, trying manual installation..."
-        # Alternative installation method
-        if ! command -v coolercontrold &> /dev/null; then
-            log_substep "Building coolercontrol from source..."
-            git clone https://github.com/David-Lor/CoolerControl.git /tmp/coolercontrol
-            cd /tmp/coolercontrol
-            mkdir build && cd build
-            cmake .. && make && sudo make install
-            cd ~
-            log_success "CoolerControl built from source"
+# Ask about CoolerControl installation
+if ask_confirm "Do you want to install CoolerControl for fan control?" "n"; then
+    log_step "Installing CoolerControl..."
+    
+    # Install coolercontrol if not already installed
+    if ! is_package_installed "coolercontrol"; then
+        log_substep "CoolerControl not found, installing from AUR..."
+        if yay -S --needed --noconfirm coolercontrol &>/dev/null; then
+            log_success "CoolerControl installed"
+        else
+            log_warning "Failed to install CoolerControl from AUR, trying manual installation..."
+            # Alternative installation method
+            if ! command -v coolercontrold &> /dev/null; then
+                log_substep "Building coolercontrol from source..."
+                git clone https://github.com/David-Lor/CoolerControl.git /tmp/coolercontrol
+                cd /tmp/coolercontrol
+                mkdir build && cd build
+                cmake .. && make && sudo make install
+                cd ~
+                log_success "CoolerControl built from source"
+            fi
         fi
+    else
+        log_success "CoolerControl already installed"
+    fi
+    
+    # Ask about NCT6687D driver installation for CoolerControl
+    if ask_confirm "Do you want to install NCT6687D driver for sensor support (required for some motherboards)?" "n"; then
+        # NCT6687D driver - IMPORTANT for CoolerControl sensor support
+        log_step "Installing NCT6687D driver for sensor support..."
+        if [ ! -d "/home/$USER/tmp/nct6687d" ]; then
+            git clone https://github.com/Fred78290/nct6687d /home/$USER/tmp/nct6687d 2>/dev/null
+            log_substep "NCT6687D repository cloned"
+        fi
+
+        if [ -d "/home/$USER/tmp/nct6687d" ]; then
+            cd /home/$USER/tmp/nct6687d/
+            
+            # Check if driver is already loaded
+            if ! lsmod | grep -q nct6687; then
+                log_substep "Building and installing NCT6687D driver..."
+                make dkms/install 2>/dev/null && log_substep "Driver compiled and installed"
+                
+                if [ -f "/home/$USER/dots/sys/no_nct6683.conf" ]; then
+                    sudo cp -r /home/$USER/dots/sys/no_nct6683.conf /etc/modprobe.d/ 2>/dev/null
+                    log_substep "Blacklisted conflicting nct6683 module"
+                fi
+                
+                if [ -f "/home/$USER/dots/sys/nct6687.conf" ]; then
+                    sudo cp -r /home/$USER/dots/sys/nct6687.conf /etc/modules-load.d/nct6687.conf 2>/dev/null
+                    log_substep "Added nct6687 to modules-load"
+                fi
+                
+                # Load the module
+                sudo modprobe nct6687 2>/dev/null
+                if lsmod | grep -q nct6687; then
+                    log_success "NCT6687D module loaded successfully"
+                else
+                    log_warning "Failed to load NCT6687D module"
+                fi
+            else
+                log_success "NCT6687D module already loaded"
+            fi
+            cd ~
+        fi
+    else
+        log_step "Skipping NCT6687D driver installation."
     fi
 else
-    log_success "CoolerControl already installed"
+    log_step "Skipping CoolerControl installation."
 fi
 
 # Create directories
@@ -154,15 +224,23 @@ mkdir -p ~/git ~/venv /home/$USER/tmp/
 sudo mkdir -p /etc/modules-load.d/
 log_success "Directories created"
 
-# Install fonts
+# Install fonts with proper directory creation
 log_step "Installing fonts..."
-mkdir -p ~/.local/share/fonts
+FONT_DIR="$HOME/.local/share/fonts"
+mkdir -p "$FONT_DIR"
+
 if [ -d "/home/$USER/dots/fonts/" ]; then
-    cp -r /home/$USER/dots/fonts/* /home/$USER/.local/share/fonts 2>/dev/null
-    fc-cache -fv
-    log_success "Fonts installed"
+    # Check if fonts directory has any files
+    if [ "$(ls -A /home/$USER/dots/fonts/ 2>/dev/null)" ]; then
+        log_substep "Copying fonts from dots/fonts/ to $FONT_DIR..."
+        cp -r /home/$USER/dots/fonts/* "$FONT_DIR/" 2>/dev/null
+        fc-cache -fv
+        log_success "Fonts installed and cache updated"
+    else
+        log_warning "Fonts directory is empty, skipping..."
+    fi
 else
-    log_warning "Fonts directory not found, skipping..."
+    log_warning "Fonts directory not found at /home/$USER/dots/fonts/, skipping..."
 fi
 
 # Flatpak installations
@@ -184,8 +262,11 @@ for app in "${FLATPAK_APPS[@]}"; do
     fi
 done
 
-# ZSH plugins
+# ZSH plugins - ensure tmp directory exists
 log_step "Installing ZSH plugins..."
+ZSH_TMP_DIR="/home/$USER/dots/tmp/"
+mkdir -p "$ZSH_TMP_DIR"
+
 ZSH_PLUGINS=(
     "https://github.com/zsh-users/zsh-autosuggestions.git"
     "https://github.com/zsh-users/zsh-syntax-highlighting.git"
@@ -194,15 +275,19 @@ ZSH_PLUGINS=(
     "https://github.com/MichaelAquilina/zsh-autoswitch-virtualenv.git"
 )
 
-mkdir -p /home/$USER/dots/tmp/
 for plugin in "${ZSH_PLUGINS[@]}"; do
     plugin_name=$(basename "$plugin" .git)
-    if [ ! -d "/home/$USER/dots/tmp/$plugin_name" ]; then
+    if [ ! -d "$ZSH_TMP_DIR/$plugin_name" ]; then
         log_substep "Cloning $plugin_name..."
         if [[ "$plugin" == *"zsh-autocomplete"* ]]; then
-            git clone --depth 1 "$plugin" "/home/$USER/dots/tmp/$plugin_name/" 2>/dev/null
+            git clone --depth 1 "$plugin" "$ZSH_TMP_DIR/$plugin_name/" 2>/dev/null
         else
-            git clone "$plugin" "/home/$USER/dots/tmp/$plugin_name/" 2>/dev/null
+            git clone "$plugin" "$ZSH_TMP_DIR/$plugin_name/" 2>/dev/null
+        fi
+        if [ $? -eq 0 ]; then
+            log_substep "$plugin_name ${GREEN}✓ Cloned${NC}"
+        else
+            log_substep "$plugin_name ${RED}✗ Failed to clone${NC}"
         fi
     else
         log_substep "$plugin_name ${GREEN}✓ Already cloned${NC}"
@@ -213,7 +298,11 @@ done
 log_step "Installing Oh My Zsh..."
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    log_success "Oh My Zsh installed"
+    if [ $? -eq 0 ]; then
+        log_success "Oh My Zsh installed"
+    else
+        log_error "Failed to install Oh My Zsh"
+    fi
 else
     log_success "Oh My Zsh already installed"
 fi
@@ -223,62 +312,67 @@ log_step "Setting ZSH as default shell..."
 CURRENT_SHELL=$(basename "$SHELL")
 if [ "$CURRENT_SHELL" != "zsh" ]; then
     chsh -s "$(which zsh)"
-    log_success "Default shell changed to ZSH"
+    if [ $? -eq 0 ]; then
+        log_success "Default shell changed to ZSH"
+    else
+        log_error "Failed to change default shell to ZSH"
+    fi
 else
     log_success "ZSH is already the default shell"
 fi
 
-# Copy ZSH plugins
+# Copy ZSH plugins - FIXED: Ensure proper copying with verbose output
 log_step "Configuring ZSH plugins..."
-mkdir -p ~/.oh-my-zsh/custom/plugins/
-PLUGIN_DIRS=("autoswitch_virtualenv" "fast-syntax-highlighting" "zsh-autocomplete" "zsh-autosuggestions" "zsh-syntax-highlighting")
+OHMYZSH_PLUGINS_DIR="$HOME/.oh-my-zsh/custom/plugins"
+mkdir -p "$OHMYZSH_PLUGINS_DIR"
 
-for plugin_dir in "${PLUGIN_DIRS[@]}"; do
-    if [ -d "/home/$USER/dots/tmp/$plugin_dir/" ]; then
-        cp -r "/home/$USER/dots/tmp/$plugin_dir/" ~/.oh-my-zsh/custom/plugins/ 2>/dev/null
-    fi
-done
-log_success "ZSH plugins configured"
+PLUGIN_MAPPING=(
+    "autoswitch_virtualenv:autoswitch-virtualenv"
+    "fast-syntax-highlighting:fast-syntax-highlighting"
+    "zsh-autocomplete:zsh-autocomplete"
+    "zsh-autosuggestions:zsh-autosuggestions"
+    "zsh-syntax-highlighting:zsh-syntax-highlighting"
+)
 
-# NCT6687D driver - IMPORTANT for CoolerControl sensor support
-log_step "Installing NCT6687D driver for sensor support..."
-if [ ! -d "/home/$USER/tmp/nct6687d" ]; then
-    git clone https://github.com/Fred78290/nct6687d /home/$USER/tmp/nct6687d 2>/dev/null
-    log_substep "NCT6687D repository cloned"
-fi
-
-if [ -d "/home/$USER/tmp/nct6687d" ]; then
-    cd /home/$USER/tmp/nct6687d/
+for plugin_mapping in "${PLUGIN_MAPPING[@]}"; do
+    source_dir=$(echo "$plugin_mapping" | cut -d':' -f1)
+    dest_dir=$(echo "$plugin_mapping" | cut -d':' -f2)
     
-    # Check if driver is already loaded
-    if ! lsmod | grep -q nct6687; then
-        log_substep "Building and installing NCT6687D driver..."
-        make dkms/install 2>/dev/null && log_substep "Driver compiled and installed"
-        
-        if [ -f "/home/$USER/dots/sys/no_nct6683.conf" ]; then
-            sudo cp -r /home/$USER/dots/sys/no_nct6683.conf /etc/modprobe.d/ 2>/dev/null
-            log_substep "Blacklisted conflicting nct6683 module"
-        fi
-        
-        if [ -f "/home/$USER/dots/sys/nct6687.conf" ]; then
-            sudo cp -r /home/$USER/dots/sys/nct6687.conf /etc/modules-load.d/nct6687.conf 2>/dev/null
-            log_substep "Added nct6687 to modules-load"
-        fi
-        
-        # Load the module
-        sudo modprobe nct6687 2>/dev/null
-        if lsmod | grep -q nct6687; then
-            log_success "NCT6687D module loaded successfully"
+    if [ -d "$ZSH_TMP_DIR/$source_dir" ]; then
+        if [ ! -d "$OHMYZSH_PLUGINS_DIR/$dest_dir" ]; then
+            log_substep "Copying $source_dir to $dest_dir..."
+            cp -r "$ZSH_TMP_DIR/$source_dir" "$OHMYZSH_PLUGINS_DIR/$dest_dir" 2>/dev/null
+            if [ $? -eq 0 ] && [ -d "$OHMYZSH_PLUGINS_DIR/$dest_dir" ]; then
+                log_substep "$dest_dir ${GREEN}✓ Installed${NC}"
+            else
+                log_substep "$dest_dir ${RED}✗ Failed to copy${NC}"
+            fi
         else
-            log_warning "Failed to load NCT6687D module"
+            log_substep "$dest_dir ${GREEN}✓ Already exists${NC}"
         fi
     else
-        log_success "NCT6687D module already loaded"
+        log_substep "$source_dir ${YELLOW}⚠ Source not found${NC}"
     fi
-    cd ~
+done
+
+# Update ZSH plugin configuration
+log_step "Updating ZSH configuration..."
+if [ -f "$HOME/.zshrc" ] || [ -L "$HOME/.zshrc" ]; then
+    # Backup existing .zshrc
+    if [ -f "$HOME/.zshrc" ]; then
+        cp "$HOME/.zshrc" "$HOME/.zshrc.backup.$(date +%Y%m%d%H%M%S)"
+    fi
+    
+    # Ensure plugins are properly listed in .zshrc if we have a template
+    if [ -f "/home/$USER/dots/.zshrc" ]; then
+        # This would be handled by the symlink creation later
+        log_substep "ZSH config will be linked from dots directory"
+    fi
 fi
 
-# Cleanup
+log_success "ZSH plugins configured"
+
+# Cleanup temporary ZSH files
 log_step "Cleaning up temporary files..."
 rm -rf /home/$USER/dots/tmp/ 2>/dev/null
 log_success "Temporary files cleaned"
@@ -336,14 +430,30 @@ declare -a SYMLINKS=(
 for link in "${SYMLINKS[@]}"; do
     source=$(echo "$link" | cut -d':' -f1)
     target=$(echo "$link" | cut -d':' -f2)
+    target_full="$target$(basename "$source")"
     
-    if [ -d "/home/$USER/dots/$source" ] || [ -f "/home/$USER/dots/$source" ]; then
-        if [ ! -e "$target/$(basename "$source")" ]; then
-            ln -s "/home/$USER/dots/$source" "$target$(basename "$source")" 2>/dev/null
-            log_substep "Linked: $source"
-        else
-            log_substep "$source ${YELLOW}⚠ Already exists${NC}"
+    # Ensure target directory exists
+    target_dir=$(dirname "$target_full")
+    mkdir -p "$target_dir"
+    
+    if [ -e "/home/$USER/dots/$source" ]; then
+        if [ -L "$target_full" ]; then
+            # Remove existing symlink
+            rm "$target_full" 2>/dev/null
         fi
+        
+        if [ ! -e "$target_full" ]; then
+            ln -sf "/home/$USER/dots/$source" "$target_full" 2>/dev/null
+            if [ $? -eq 0 ]; then
+                log_substep "Linked: $source → $(basename "$target_full")"
+            else
+                log_substep "$source ${RED}✗ Failed to link${NC}"
+            fi
+        else
+            log_substep "$(basename "$source") ${YELLOW}⚠ Already exists (not a symlink)${NC}"
+        fi
+    else
+        log_substep "$source ${YELLOW}⚠ Source not found${NC}"
     fi
 done
 
@@ -387,11 +497,13 @@ fi
 
 # Copy pywal configs
 if [ -f "${HOME}/.cache/wal/pywal.kvconfig" ]; then
+    mkdir -p "${HOME}/.config/Kvantum/pywal/"
     cp "${HOME}"/.cache/wal/pywal.kvconfig "${HOME}"/.config/Kvantum/pywal/pywal.kvconfig 2>/dev/null
     log_substep "Pywal Kvantum config updated"
 fi
 
 if [ -f "${HOME}/.cache/wal/pywal.svg" ]; then
+    mkdir -p "${HOME}/.config/Kvantum/pywal/"
     cp "${HOME}"/.cache/wal/pywal.svg "${HOME}"/.config/Kvantum/pywal/pywal.svg 2>/dev/null
     log_substep "Pywal SVG theme updated"
 fi
@@ -404,6 +516,7 @@ if [ -f "/home/$USER/dots/sys/sddm/sddm.conf" ]; then
 fi
 
 if [ -d "/home/$USER/dots/sys/sddm/tokyo-night" ]; then
+    sudo mkdir -p /usr/share/sddm/themes/
     sudo cp -r /home/$USER/dots/sys/sddm/tokyo-night/ /usr/share/sddm/themes/ 2>/dev/null
     log_substep "Tokyo Night SDDM theme installed"
 fi
@@ -416,15 +529,16 @@ if [ -f "/home/$USER/dots/sys/grub/grub" ]; then
 fi
 
 if [ -d "/home/$USER/dots/sys/grub/tokyo-night" ]; then
+    sudo mkdir -p /usr/share/grub/themes/
     sudo cp -r /home/$USER/dots/sys/grub/tokyo-night /usr/share/grub/themes/ 2>/dev/null
     log_substep "Tokyo Night GRUB theme installed"
 fi
 
 sudo grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null && log_success "GRUB configured"
 
-# COOLERCONTROL SETUP
-log_step "Setting up CoolerControl..."
+# COOLERCONTROL SETUP (only if installed)
 if command -v coolercontrold &> /dev/null; then
+    log_step "Setting up CoolerControl..."
     # Check if service exists
     if systemctl list-unit-files | grep -q coolercontrol; then
         log_substep "CoolerControl service found"
@@ -461,6 +575,7 @@ if command -v coolercontrold &> /dev/null; then
         # Create desktop entry for GUI if it doesn't exist
         if [ ! -f "/usr/share/applications/coolercontrol.desktop" ] && [ ! -f "$HOME/.local/share/applications/coolercontrol.desktop" ]; then
             log_substep "Creating desktop entry..."
+            mkdir -p "$HOME/.local/share/applications/"
             cat > /tmp/coolercontrol.desktop << EOF
 [Desktop Entry]
 Name=CoolerControl
@@ -473,7 +588,7 @@ Categories=Utility;System;
 StartupNotify=true
 EOF
             sudo cp /tmp/coolercontrol.desktop /usr/share/applications/ 2>/dev/null || \
-            cp /tmp/coolercontrol.desktop $HOME/.local/share/applications/ 2>/dev/null
+            cp /tmp/coolercontrol.desktop "$HOME/.local/share/applications/" 2>/dev/null
             rm /tmp/coolercontrol.desktop
             log_substep "Desktop entry created"
         fi
@@ -495,9 +610,6 @@ EOF
         log_warning "CoolerControl service unit not found"
         log_substep "You may need to manually create the service"
     fi
-else
-    log_error "CoolerControl not installed properly"
-    log_substep "Install it manually with: yay -S coolercontrol"
 fi
 
 # Display configuration
@@ -524,14 +636,21 @@ echo -e "${GREEN}✓ System packages installed${NC}"
 echo -e "${GREEN}✓ Fonts and themes configured${NC}"
 echo -e "${GREEN}✓ ZSH and plugins set up${NC}"
 echo -e "${GREEN}✓ Configuration files linked${NC}"
-echo -e "${GREEN}✓ CoolerControl installed and configured${NC}"
+
+if command -v coolercontrold &> /dev/null; then
+    echo -e "${GREEN}✓ CoolerControl installed and configured${NC}"
+fi
+
 echo -e "${GREEN}✓ Display configured${NC}"
 echo ""
-echo -e "${YELLOW}Note: For CoolerControl to work properly:${NC}"
-echo -e "${YELLOW}1. You may need to reboot for NCT6687D driver to load${NC}"
-echo -e "${YELLOW}2. Log out and back in for coolercontrol group membership${NC}"
-echo -e "${YELLOW}3. Run 'coolercontrol' to access the GUI${NC}"
-echo ""
+
+if command -v coolercontrold &> /dev/null; then
+    echo -e "${YELLOW}Note: For CoolerControl to work properly:${NC}"
+    echo -e "${YELLOW}1. You may need to reboot for NCT6687D driver to load${NC}"
+    echo -e "${YELLOW}2. Log out and back in for coolercontrol group membership${NC}"
+    echo -e "${YELLOW}3. Run 'coolercontrol' to access the GUI${NC}"
+    echo ""
+fi
 
 # Ask for confirmation before reboot
 read -rp "Do you want to reboot now? (y/N): " reboot_confirm
@@ -540,5 +659,7 @@ if [[ "$reboot_confirm" =~ ^[Yy]$ ]]; then
     bash /home/$USER/dots/reboot.sh
 else
     echo -e "${YELLOW}Skipping reboot. You can manually run the reboot script later.${NC}"
-    echo -e "${YELLOW}To start CoolerControl manually, run: sudo systemctl start coolercontrold.service${NC}"
+    if command -v coolercontrold &> /dev/null; then
+        echo -e "${YELLOW}To start CoolerControl manually, run: sudo systemctl start coolercontrold.service${NC}"
+    fi
 fi
