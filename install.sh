@@ -424,7 +424,6 @@ declare -a SYMLINKS=(
     "xdg-desktop-portal/:/home/$USER/.config/"
     ".icons/:/home/$USER/"
     ".themes/:/home/$USER/"
-    "dunst/:/home/$USER/.config/"
 )
 
 for link in "${SYMLINKS[@]}"; do
