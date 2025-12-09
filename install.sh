@@ -11,6 +11,8 @@ else
     log_success "yay already installed"
 fi
 
+yay -Syyu
+
 yay -S --needed --noconfirm \
     swww qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
     hypridle hyprlock hyprpicker tree qt5ct qt6ct qt5-styleplugins \
