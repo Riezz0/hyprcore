@@ -321,19 +321,28 @@ else
     log_success "ZSH is already the default shell"
 fi
 
-# Copy ZSH plugins - FIXED: Ensure proper copying with verbose output
+# Debug: Show what's in the temp directory
+log_step "Debug: Checking plugin directories..."
+if [ -d "$ZSH_TMP_DIR" ]; then
+    log_substep "Contents of $ZSH_TMP_DIR:"
+    ls -la "$ZSH_TMP_DIR" 2>/dev/null
+fi
+
+# Copy ZSH plugins - FIXED: Correct plugin names and mapping
 log_step "Configuring ZSH plugins..."
 OHMYZSH_PLUGINS_DIR="$HOME/.oh-my-zsh/custom/plugins"
 mkdir -p "$OHMYZSH_PLUGINS_DIR"
 
+# Correct plugin mapping based on the actual git clones
 PLUGIN_MAPPING=(
-    "autoswitch_virtualenv:autoswitch-virtualenv"
+    "zsh-autoswitch-virtualenv:autoswitch-virtualenv"
     "fast-syntax-highlighting:fast-syntax-highlighting"
     "zsh-autocomplete:zsh-autocomplete"
     "zsh-autosuggestions:zsh-autosuggestions"
     "zsh-syntax-highlighting:zsh-syntax-highlighting"
 )
 
+log_substep "Copying plugins to Oh My Zsh directory..."
 for plugin_mapping in "${PLUGIN_MAPPING[@]}"; do
     source_dir=$(echo "$plugin_mapping" | cut -d':' -f1)
     dest_dir=$(echo "$plugin_mapping" | cut -d':' -f2)
@@ -341,7 +350,7 @@ for plugin_mapping in "${PLUGIN_MAPPING[@]}"; do
     if [ -d "$ZSH_TMP_DIR/$source_dir" ]; then
         if [ ! -d "$OHMYZSH_PLUGINS_DIR/$dest_dir" ]; then
             log_substep "Copying $source_dir to $dest_dir..."
-            cp -r "$ZSH_TMP_DIR/$source_dir" "$OHMYZSH_PLUGINS_DIR/$dest_dir" 2>/dev/null
+            cp -rf "$ZSH_TMP_DIR/$source_dir" "$OHMYZSH_PLUGINS_DIR/$dest_dir" 2>/dev/null
             if [ $? -eq 0 ] && [ -d "$OHMYZSH_PLUGINS_DIR/$dest_dir" ]; then
                 log_substep "$dest_dir ${GREEN}✓ Installed${NC}"
             else
@@ -351,24 +360,37 @@ for plugin_mapping in "${PLUGIN_MAPPING[@]}"; do
             log_substep "$dest_dir ${GREEN}✓ Already exists${NC}"
         fi
     else
-        log_substep "$source_dir ${YELLOW}⚠ Source not found${NC}"
+        log_substep "$source_dir ${YELLOW}⚠ Source not found in $ZSH_TMP_DIR${NC}"
     fi
 done
 
-# Update ZSH plugin configuration
-log_step "Updating ZSH configuration..."
-if [ -f "$HOME/.zshrc" ] || [ -L "$HOME/.zshrc" ]; then
-    # Backup existing .zshrc
+# Special handling for .zshrc symlink
+log_step "Linking .zshrc..."
+if [ -f "/home/$USER/dots/.zshrc" ]; then
     if [ -f "$HOME/.zshrc" ]; then
-        cp "$HOME/.zshrc" "$HOME/.zshrc.backup.$(date +%Y%m%d%H%M%S)"
+        mv "$HOME/.zshrc" "$HOME/.zshrc.backup.$(date +%Y%m%d%H%M%S)"
+        log_substep "Backed up existing .zshrc"
     fi
     
-    # Ensure plugins are properly listed in .zshrc if we have a template
-    if [ -f "/home/$USER/dots/.zshrc" ]; then
-        # This would be handled by the symlink creation later
-        log_substep "ZSH config will be linked from dots directory"
+    ln -sf "/home/$USER/dots/.zshrc" "$HOME/.zshrc" 2>/dev/null
+    if [ $? -eq 0 ] && [ -L "$HOME/.zshrc" ]; then
+        log_success ".zshrc symlink created"
+    else
+        log_error "Failed to create .zshrc symlink"
     fi
+else
+    log_warning ".zshrc not found in dots directory"
 fi
+
+# Verify plugin directories exist
+log_step "Verifying plugin installation..."
+for plugin_dir in "autoswitch-virtualenv" "zsh-autosuggestions" "zsh-syntax-highlighting" "fast-syntax-highlighting" "zsh-autocomplete"; do
+    if [ -d "$OHMYZSH_PLUGINS_DIR/$plugin_dir" ]; then
+        log_substep "$plugin_dir ${GREEN}✓ Verified${NC}"
+    else
+        log_substep "$plugin_dir ${RED}✗ Missing${NC}"
+    fi
+done
 
 log_success "ZSH plugins configured"
 
@@ -404,10 +426,9 @@ if [ -f "/etc/default/grub" ]; then
     log_substep "Removed: grub"
 fi
 
-# Create symlinks
+# Create symlinks (excluding .zshrc since we already handled it)
 log_step "Creating configuration symlinks..."
 declare -a SYMLINKS=(
-    ".zshrc:/home/$USER/"
     "fastfetch/:/home/$USER/.config/"
     "hypr/:/home/$USER/.config/"
     "kitty/:/home/$USER/.config/"
@@ -643,6 +664,14 @@ fi
 echo -e "${GREEN}✓ Display configured${NC}"
 echo ""
 
+# Verify .zshrc symlink exists
+if [ -L "$HOME/.zshrc" ] && [ -f "$HOME/.zshrc" ]; then
+    echo -e "${GREEN}✓ .zshrc symlink is correctly set up${NC}"
+    echo -e "${BLUE}  Linked to: $(readlink -f "$HOME/.zshrc")${NC}"
+else
+    echo -e "${RED}⚠ .zshrc symlink may not be properly set up${NC}"
+fi
+
 if command -v coolercontrold &> /dev/null; then
     echo -e "${YELLOW}Note: For CoolerControl to work properly:${NC}"
     echo -e "${YELLOW}1. You may need to reboot for NCT6687D driver to load${NC}"
@@ -661,4 +690,5 @@ else
     if command -v coolercontrold &> /dev/null; then
         echo -e "${YELLOW}To start CoolerControl manually, run: sudo systemctl start coolercontrold.service${NC}"
     fi
+    echo -e "${YELLOW}To test ZSH, run: zsh${NC}"
 fi
