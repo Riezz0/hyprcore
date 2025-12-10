@@ -1,5 +1,5 @@
 #!/bin/bash
 git clone https://github.com/Riezz0/hyprcore.git /home/$USER/dots/
-chmod +x /home/$USER/dots/install.py
+chmod +x /home/$USER/dots/install.sh
 cd /home/$USER/dots/ 
-python3 /home/$USER/dots/install.py
+bash /home/$USER/dots/install.sh
