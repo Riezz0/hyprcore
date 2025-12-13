@@ -4,19 +4,31 @@ import threading
 import os
 import sys
 
-# Configure PyGObject to use GTK 4
+# --- Configuration & Global Variables ---
+# NOTE: The script attempts to import gi.repository.Gtk. If this fails due to missing
+# python-gobject or gtk4, the script will exit and inform the user to manually install the
+# core packages (python python-pip python-gobject gtk4) if the dependency check step fails.
 try:
     gi.require_version("Gtk", "4.0")
     from gi.repository import Gtk, GLib
-except ValueError:
-    print("Error: Could not find GTK 4.0. Please ensure the 'gtk4' package is installed.")
+except ValueError as e:
+    # This block is a failsafe. If even the minimal Python environment is missing, 
+    # the user must install the prerequisites manually via the terminal.
+    print("---------------------------------------------------------------")
+    print("CRITICAL ERROR: PyGObject/GTK4 libraries missing.")
+    print("Please install the absolute core prerequisites in the terminal first:")
+    print("  sudo pacman -S --needed --noconfirm python python-gobject gtk4")
+    print("Then run this script again.")
+    print("---------------------------------------------------------------")
     sys.exit(1)
 
-# --- Configuration & Global Variables ---
 USER = os.getenv('USER')
 HOME = os.getenv('HOME')
 DOTFILES_DIR = os.path.join(HOME, 'dots')
-POLKIT_COMMAND = ['pkexec'] # pkexec will use the installed policy agent (like xfce-polkit)
+# pkexec will use the installed policy agent (like xfce-polkit)
+POLKIT_COMMAND = ['pkexec'] 
+POLKIT_AGENT_PATH = '/usr/lib/xfce-polkit/xfce-polkit' # User-specified path for check
+CORE_DEPENDENCIES = ['python-gobject', 'gtk4', 'xfce-polkit', 'python-psutil']
 
 # --- Utility Functions ---
 
@@ -34,13 +46,18 @@ def run_command_async(command_parts, callback, cwd=None):
     """
     def target():
         try:
+            # Check if the command starts with 'bash -c' to handle shell pipelines
+            shell = True if command_parts[0] == 'bash' and command_parts[1] == '-c' else False
+            
             process = subprocess.Popen(
                 command_parts,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
-                cwd=cwd
+                cwd=cwd,
+                shell=shell, # Set shell=True if the command is a bash -c string
+                executable='/bin/bash' if shell else None
             )
 
             # Read output line-by-line in real-time
@@ -62,19 +79,63 @@ def run_command_async(command_parts, callback, cwd=None):
     thread.start()
     return thread
 
-# --- Installation Steps (Mapped from install.sh) ---
+# --- Installation Steps (Modified to prioritize dependencies) ---
 
 INSTALLATION_STEPS = [
-    # 1. Install yay
+    # NEW STEP 1: Dependency Check and Installation (Must be first!)
+    {
+        "name": "Install Core GUI Dependencies (PyGObject, GTK4, xfce-polkit, psutil)",
+        "commands": [
+            # Uses pkexec with a bash wrapper to find missing dependencies and install them via pacman.
+            (['bash', '-c', 
+              f'MISSING_DEPS=""; '
+              f'for PKG in {" ".join(CORE_DEPENDENCIES)}; do '
+                  f'pacman -Q $PKG &>/dev/null || MISSING_DEPS+="$PKG "; '
+              f'done; '
+              f'if [ -n "$MISSING_DEPS" ]; then '
+                  f'echo "Installing missing dependencies: $MISSING_DEPS"; '
+                  f'{POLKIT_COMMAND[0]} pacman -S --needed --noconfirm $MISSING_DEPS; '
+              f'else '
+                  f'echo "All core dependencies are already installed."; '
+              f'fi'], 
+             'Checking and installing PyGObject and xfce-polkit'),
+        ],
+        "requires_sudo": True 
+    },
+    # NEW STEP 2: Verify and Start Polkit Agent (Must run before other elevated tasks)
+    {
+        "name": "Verify and Start xfce-polkit Authentication Agent",
+        "commands": [
+            (['bash', '-c', 
+              f'if [ -f {POLKIT_AGENT_PATH} ]; then '
+                  f'echo "xfce-polkit agent executable found at {POLKIT_AGENT_PATH}."; '
+                  f'if ! pgrep -f "xfce-polkit" > /dev/null; then '
+                      f'echo "xfce-polkit not running. Starting it now in background..."; '
+                      f'setsid {POLKIT_AGENT_PATH} & '
+                      f'sleep 2; ' # Give time for agent to initialize
+                  f'else '
+                      f'echo "xfce-polkit agent is already running."; '
+                  f'fi; '
+                  f'echo "Testing pkexec functionality..."; '
+                  f'{POLKIT_COMMAND[0]} echo "Polkit test successful."; '
+              f'else '
+                  f'echo "ERROR: xfce-polkit executable not found at {POLKIT_AGENT_PATH}. The installation may fail without a working PolicyKit agent."; '
+                  f'exit 1; '
+              f'fi'], 
+             'Starting and verifying xfce-polkit')
+        ],
+        "requires_sudo": False # The agent start is non-sudo, and pkexec is tested inside
+    },
+    # 3. Install yay (Original Step 1)
     {
         "name": "Install & Update yay and Dependencies",
         "commands": [
             (['bash', '-c', f'if ! command -v yay &> /dev/null; then echo "Installing yay..."; {POLKIT_COMMAND[0]} pacman -S --needed --noconfirm git base-devel && git clone https://aur.archlinux.org/yay.git /tmp/yay && cd /tmp/yay && makepkg -si --noconfirm && cd ~ && echo "yay installed"; else echo "yay already installed"; fi'], 'Installing yay'),
             (['yay', '-Syyu'], 'System Update and Sync'),
         ],
-        "requires_sudo": True # Handled by the bash command structure
+        "requires_sudo": True 
     },
-    # 2. Install Main Packages
+    # 4. Install Main Packages (Original Step 2, removed xfce-polkit, python-gobject, gtk4, python-psutil)
     {
         "name": "Install Main Package List",
         "commands": [
@@ -84,18 +145,18 @@ INSTALLATION_STEPS = [
               'wl-clipboard', 'firefox', 'code', 'nemo', 'vlc', 'nwg-look', 'gnome-disk-utility', 
               'nwg-displays', 'zsh', 'ttf-meslo-nerd', 'ttf-font-awesome', 'ttf-font-awesome-4', 
               'ttf-font-awesome-5', 'waybar', 'rust', 'cargo', 'fastfetch', 'cmatrix', 'pavucontrol', 
-              'net-tools', 'python-pip', 'python-psutil', 'python-virtualenv', 'python-requests', 
-              'python-hijri-converter', 'python-pytz', 'python-gobject', 'xfce4-settings', 
-              'xfce-polkit', 'exa', 'libreoffice-fresh', 'rofi-wayland', 'neovim', 'goverlay-git', 
+              'net-tools', 'python-pip', 'python-virtualenv', 'python-requests', 
+              'python-hijri-converter', 'python-pytz', 'xfce4-settings', 
+              'exa', 'libreoffice-fresh', 'rofi-wayland', 'neovim', 'goverlay-git', 
               'flatpak', 'python-pywal16', 'python-pywalfox', 'make', 'linux-firmware', 'dkms', 
               'automake', 'linux-zen-headers', 'kvantum-qt5', 'chromium', 'nemo-fileroller', 
               'waybar-module-pacman-updates-git', 'coolercontrol-bin', 'steam', 'lutris', 
               'python-geocoder'], 
              'Installing all necessary packages via yay'),
         ],
-        "requires_sudo": False # yay handles privilege
+        "requires_sudo": False 
     },
-    # 3. Setup Directories & Fonts
+    # 5. Setup Directories & Fonts (Original Step 3)
     {
         "name": "Setup Directories and Fonts",
         "commands": [
@@ -106,7 +167,7 @@ INSTALLATION_STEPS = [
         ],
         "requires_sudo": False
     },
-    # 4. Install Flatpaks
+    # 6. Install Flatpaks (Original Step 4)
     {
         "name": "Install Flatpak Applications",
         "commands": [
@@ -118,7 +179,7 @@ INSTALLATION_STEPS = [
         ],
         "requires_sudo": False
     },
-    # 5. Zsh Setup
+    # 7. Zsh Setup (Original Step 5)
     {
         "name": "Configure Zsh and Plugins",
         "commands": [
@@ -127,7 +188,7 @@ INSTALLATION_STEPS = [
             (['git', 'clone', 'https://github.com/zdharma-continuum/fast-syntax-highlighting.git', f'{DOTFILES_DIR}/tmp/fast-syntax-highlighting/'], 'Cloning fast-syntax-highlighting'),
             (['git', 'clone', '--depth', '1', 'https://github.com/marlonrichert/zsh-autocomplete.git', f'{DOTFILES_DIR}/tmp/zsh-autocomplete/'], 'Cloning zsh-autocomplete'),
             (['git', 'clone', 'https://github.com/MichaelAquilina/zsh-autoswitch-virtualenv.git', f'{DOTFILES_DIR}/tmp/autoswitch_virtualenv/'], 'Cloning zsh-autoswitch-virtualenv'),
-            (['bash', '-c', f'RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'], 'Installing Oh My Zsh'),
+            (['bash', '-c', 'RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'], 'Installing Oh My Zsh'),
             (['chsh', '-s', '/usr/bin/zsh'], 'Setting Zsh as default shell'),
             (['mkdir', '-p', f'{HOME}/.oh-my-zsh/custom/plugins'], 'Creating OMZ plugins directory'),
             (['cp', '-r', f'{DOTFILES_DIR}/tmp/autoswitch_virtualenv/', f'{HOME}/.oh-my-zsh/custom/plugins/'], 'Copying autoswitch_virtualenv'),
@@ -136,9 +197,9 @@ INSTALLATION_STEPS = [
             (['cp', '-r', f'{DOTFILES_DIR}/tmp/zsh-autosuggestions/', f'{HOME}/.oh-my-zsh/custom/plugins/'], 'Copying zsh-autosuggestions'),
             (['cp', '-r', f'{DOTFILES_DIR}/tmp/zsh-syntax-highlighting/', f'{HOME}/.oh-my-zsh/custom/plugins/'], 'Copying zsh-syntax-highlighting'),
         ],
-        "requires_sudo": False
+        "requires_sudo": True # chsh requires pkexec/sudo when run by a non-root user in a graphical environment.
     },
-    # 6. Clean and Symlink Dotfiles
+    # 8. Clean and Symlink Dotfiles (Original Step 6)
     {
         "name": "Clean and Symlink Dotfiles",
         "commands": [
@@ -165,9 +226,9 @@ INSTALLATION_STEPS = [
             (['ln', '-s', f'{DOTFILES_DIR}/.themes/', f'{HOME}/'], 'Symlinking .themes'),
             (['rm', f'{HOME}/.config/hypr/monitors.conf'], 'Removing monitors.conf (to be created by nwg-displays)'),
         ],
-        "requires_sudo": True # Only to clean sddm.conf and grub, which are now handled in later steps
+        "requires_sudo": False 
     },
-    # 7. GTK/GNOME Settings and Wallpaper
+    # 9. GTK/GNOME Settings and Wallpaper (Original Step 7)
     {
         "name": "Apply GTK/GNOME Settings and Wallpaper",
         "commands": [
@@ -186,7 +247,7 @@ INSTALLATION_STEPS = [
         ],
         "requires_sudo": False
     },
-    # 8. SDDM/GRUB Setup (Requires Sudo)
+    # 10. SDDM/GRUB Setup (Original Step 8)
     {
         "name": "Configure SDDM and GRUB Themes",
         "commands": [
@@ -203,7 +264,7 @@ INSTALLATION_STEPS = [
         ],
         "requires_sudo": True
     },
-    # 9. Custom Kernel Module (nct6687d)
+    # 11. Custom Kernel Module (Original Step 9)
     {
         "name": "Install nct6687d Kernel Module",
         "commands": [
@@ -216,7 +277,7 @@ INSTALLATION_STEPS = [
         ],
         "requires_sudo": True
     },
-    # 10. nwg-displays (Interactive Step)
+    # 12. nwg-displays (Original Step 10)
     {
         "name": "Monitor Configuration (Manual Step)",
         "commands": [
@@ -331,18 +392,18 @@ class DotfilesInstaller(Gtk.Application):
         self.current_command_index = 0
         
         if step.get('interactive', False):
-            # Handle the nwg-displays interactive step
+            # Handle interactive steps (like nwg-displays)
             self.update_log(f"*** INTERACTIVE STEP: {step['name']} ***")
-            self.update_log("Please wait for the application to launch. Close it to continue.")
+            self.update_log("Please wait for the application to launch. Close the launched window to continue.")
             
             # Run the interactive command and wait for it
-            command_parts, description = step['commands'][1] # Assumes nwg-displays is the second command
+            command_parts, description = step['commands'][1] 
             
             def interactive_callback(output):
                 """A modified callback that also checks for the return of the interactive command."""
                 self.update_log(output)
                 if output.startswith("✅ Command successful") or output.startswith("❌ Command failed"):
-                    # The nwg-displays process has finished
+                    # The interactive process has finished
                     self.update_log("✅ Interactive step finished. Continuing...")
                     GLib.idle_add(self.advance_to_next_step)
 
@@ -381,14 +442,10 @@ class DotfilesInstaller(Gtk.Application):
                 GLib.idle_add(self.run_next_command)
 
         if step.get('requires_sudo', False):
+            # Use pkexec for elevated tasks
             self.active_thread = run_command_with_polkit(command_parts, description, command_callback)
-        elif command_parts[0] == 'yay':
-            # yay handles its own sudo via policy, so treat it as non-polkit for simplicity
-            self.active_thread = run_command_async(command_parts, command_callback, cwd=cwd)
-        elif command_parts[0] == 'chsh':
-             # chsh requires polkit in most cases to change the shell
-             self.active_thread = run_command_with_polkit(command_parts, description, command_callback)
         else:
+            # Use standard async execution for non-elevated tasks (git clone, mkdir, yay, etc.)
             self.active_thread = run_command_async(command_parts, command_callback, cwd=cwd)
 
     def advance_to_next_step(self):
@@ -422,3 +479,4 @@ if __name__ == "__main__":
 
     app = DotfilesInstaller()
     sys.exit(app.run(sys.argv))
+
