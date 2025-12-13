@@ -15,7 +15,7 @@ log() {
 # Check if swww is running
 if ! swww query; then
     echo "Starting swww daemon..."
-    swww init
+    swww-daemon
     sleep 1
 fi
 

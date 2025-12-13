@@ -1,7 +1,9 @@
 #!/bin/bash
 
+#YAY INSTALLATION
 sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
 
+#PKGS INSTALLATION
 yay -S --needed --noconfirm \
     swww qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
     hypridle hyprlock hyprpicker tree qt5ct qt6ct qt5-styleplugins \
@@ -14,21 +16,26 @@ yay -S --needed --noconfirm \
     flatpak python-pywal16 python-pywalfox make linux-firmware dkms \
     automake linux-zen-headers kvantum-qt5 chromium nemo-fileroller \
     waybar-module-pacman-updates-git coolercontrol-bin steam lutris \
-    python-geocoder \
+    python-geocoder scdoc \
 
-mkdir -p ~/git ~/venv /home/$USER/tmp/
+#MAKE DIRS
+mkdir -p /home/$USER/git /home/$USER/venv /home/$USER/tmp/
 sudo mkdir -p /etc/modules-load.d/
 
+#FONTS INSTALLATION
 mkdir -p ~/.local/share/fonts
 cp -r /home/$USER/dots/fonts/* /home/$USER/.local/share/fonts
 fc-cache -fv
 
+
+#FLATPAKS
 flatpak install --noninteractive flathub org.localsend.localsend_app
 flatpak install --noninteractive flathub com.github.tchx84.Flatseal
 flatpak install --noninteractive flathub com.usebottles.bottles
 flatpak install --noninteractive flathub net.lutris.Lutris
 flatpak install --noninteractive flathub net.rpcs3.RPCS3
 
+#OHMYZSH & PLUGINS INSTALLTION
 git clone "https://github.com/zsh-users/zsh-autosuggestions.git" "/home/$USER/dots/tmp/zsh-autosuggestions/"
 git clone "https://github.com/zsh-users/zsh-syntax-highlighting.git" "/home/$USER/dots/tmp/zsh-syntax-highlighting/"
 git clone "https://github.com/zdharma-continuum/fast-syntax-highlighting.git" "/home/$USER/dots/tmp/fast-syntax-highlighting/"
@@ -43,14 +50,9 @@ cp -r /home/$USER/dots/tmp/fast-syntax-highlighting/ ~/.oh-my-zsh/custom/plugins
 cp -r /home/$USER/dots/tmp/zsh-autocomplete/ ~/.oh-my-zsh/custom/plugins/
 cp -r /home/$USER/dots/tmp/zsh-autosuggestions/ ~/.oh-my-zsh/custom/plugins/
 cp -r /home/$USER/dots/tmp/zsh-syntax-highlighting/ ~/.oh-my-zsh/custom/plugins/
-
-rm -rf /home/$USER/dots/tmp/
-rm -rf /home/$USER/.config/hypr
-rm -rf /home/$USER/.config/kitty
-sudo rm /etc/sddm.conf
-sudo rm /etc/default/grub
 rm -rf ~/.zshrc
 
+#SYMLINKS
 ln -s /home/$USER/dots/.zshrc /home/$USER/
 ln -s /home/$USER/dots/fastfetch/ /home/$USER/.config/
 ln -s /home/$USER/dots/hypr/ /home/$USER/.config/
@@ -69,12 +71,20 @@ ln -s /home/$USER/dots/xdg-desktop-portal/ /home/$USER/.config/
 ln -s /home/$USER/dots/.icons/ /home/$USER/
 ln -s /home/$USER/dots/.themes/ /home/$USER/
 
+#REMOVE CONFLICTING DIRS
+rm -rf /home/$USER/dots/tmp/
+rm -rf /home/$USER/.config/hypr
+rm -rf /home/$USER/.config/kitty
+sudo rm /etc/sddm.conf
+sudo rm /etc/default/grub
 rm  /home/$USER/.config/hypr/monitors.conf
-
 sudo rm -rf /usr/share/icons/default
+
+#CURSORS
 sudo cp -r /home/$USER/dots/sys/cursors/default /usr/share/icons/
 sudo cp -r /home/$USER/dots/sys/cursors/oreo_white_cursors /usr/share/icons/
 
+#THEME AND FONTS INSTALLATIONS
 gsettings set org.gnome.desktop.interface cursor-theme "oreo_white_cursors"
 gsettings set org.gnome.desktop.interface icon-theme "oomox-Tokyo-Night"
 gsettings set org.gnome.desktop.interface gtk-theme "oomox-Tokyo-Night"
@@ -83,20 +93,35 @@ gsettings set org.gnome.desktop.interface document-font-name "MesloLGL Nerd Font
 gsettings set org.gnome.desktop.interface monospace-font-name "MesloLGL Mono Nerd Font 12"
 gsettings set org.gnome.desktop.wm.preferences titlebar-font "MesloLGL Mono Nerd Font 12"
 
-swww-daemon 2>/dev/null &
-bash /home/$USER/scripts/swww.sh &
+#LOAD WALLPAPER
+bash /home/$USER/.config/scripts/swww.sh & disown
+
+#LOAD PYWAL COLOR SCHEME
 wal --theme ~/.config/pywal/themes/active.json
 
+#KVANTUM THEME
 cp "${HOME}"/.cache/wal/pywal.kvconfig "${HOME}"/.config/Kvantum/pywal/pywal.kvconfig
 cp "${HOME}"/.cache/wal/pywal.svg "${HOME}"/.config/Kvantum/pywal/pywal.svg
 
+#SDDM THEME
 sudo cp -r /home/$USER/dots/sys/sddm/sddm.conf /etc/
 sudo cp -r /home/$USER/dots/sys/sddm/tokyo-night/ /usr/share/sddm/themes/
 
+#GRUB THEME
 sudo cp -r /home/$USER/dots/sys/grub/grub /etc/default/
 sudo cp -r /home/$USER/dots/sys/grub/tokyo-night /usr/share/grub/themes/
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 
+#ARCH-UPDATE MODULE 
+git clone "https://github.com/Antiz96/arch-update.git" "/home/$USER/arch-update/"
+cd /home/$USER/arch-update/
+make
+sudo make install
+make clean
+systemctl --user enable --now arch-update-tray.service
+arch-update --tray --enable
+
+#NCT6687D DRIVER INSTALL (SHOULD BE MADE OPTIONAL)
 git clone https://github.com/Fred78290/nct6687d /home/$USER/tmp/nct6687d
 cd /home/$USER/tmp/nct6687d/
 make dkms/install
@@ -104,16 +129,19 @@ sudo cp -r /home/$USER/dots/sys/no_nct6683.conf /etc/modprobe.d/
 sudo cp -r /home/$USER/dots/sys/nct6687.conf /etc/modules-load.d/nct6687.conf
 sudo modprobe nct6687
 
+#COOLERCONTROL (SHOULD BE MADE OPTIONAL)
+#sudo systemctl enable coolercontrold.service
+#sudo systemctl start coolercontrold.service
+
+#DISPLAY SETTINGS
 echo "🚀 Launching nwg-displays for display configuration..."
 echo "📺 Please set up your monitors in the nwg-displays window."
 echo "❌ Close the nwg-displays window when you're done to continue..."
 echo ""
 nwg-displays
-
-# This line only runs AFTER nwg-displays is closed
 echo "✅ Display configuration saved! Continuing with setup..."
 
+#REBOOT SYS
 bash /home/$USER/dots/reboot.sh
 
-#sudo systemctl enable coolercontrold.service
-#sudo systemctl start coolercontrold.service
+
