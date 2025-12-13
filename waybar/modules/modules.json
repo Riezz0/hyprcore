@@ -5,6 +5,7 @@
 "~/.config/waybar/modules/games.json",          /////|                                                         
 "~/.config/waybar/modules/lutris.json",         /////|                                                         
 "~/.config/waybar/modules/retroarch.json",      /////|                                                         
+"~/.config/waybar/modules/ps3.json",            /////|                                                         
 "~/.config/waybar/modules/steam.json",          /////|                                                         
 "~/.config/waybar/modules/workspaces.json",     /////|                                                        
 "~/.config/waybar/modules/quran.json",          /////|                                                        

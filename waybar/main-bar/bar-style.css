@@ -113,7 +113,7 @@ button:hover {
 
 #custom-aur {
   background-color: alpha(@background, 0.65);
-  color: @color4;
+  color: @color5;
   margin-bottom: 5px;
   margin-top: 3px;
   margin-left: 0px;
@@ -125,7 +125,7 @@ button:hover {
   border-radius: 0px;
   box-shadow: 2px 2px 2px 0px rgba(0,0,0,0.6);
   border-bottom-width: 4px;
-  border-bottom-color: alpha(@color4, 0.5);
+  border-bottom-color: alpha(@color5, 0.5);
   border-bottom-style: solid;
 
 }
@@ -411,7 +411,7 @@ button:hover {
 
 #custom-games{
   background-color: alpha(@background, 0.65);
-  color: @color1;
+  color: @color3;
   margin-bottom: 5px;
   margin-top: 3px;
   margin-left: 0px;
@@ -423,7 +423,7 @@ button:hover {
   border-radius: 0px;
   box-shadow: 2px 2px 2px 0px rgba(0,0,0,0.6);
   border-bottom-width: 4px;
-  border-bottom-color: alpha(@color1, 0.5);
+  border-bottom-color: alpha(@color3, 0.5);
   border-bottom-style: solid;
 }
 #tooltip {

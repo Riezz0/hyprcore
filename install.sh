@@ -25,6 +25,7 @@ yay -S --needed --noconfirm \
     flatpak python-pywal16 python-pywalfox make linux-firmware dkms \
     automake linux-zen-headers kvantum-qt5 chromium nemo-fileroller \
     waybar-module-pacman-updates-git coolercontrol-bin steam lutris \
+    python-geocoder \
 
 mkdir -p ~/git ~/venv /home/$USER/tmp/
 sudo mkdir -p /etc/modules-load.d/
@@ -37,6 +38,7 @@ flatpak install --noninteractive flathub org.localsend.localsend_app
 flatpak install --noninteractive flathub com.github.tchx84.Flatseal
 flatpak install --noninteractive flathub com.usebottles.bottles
 flatpak install --noninteractive flathub net.lutris.Lutris
+flatpak install --noninteractive flathub net.rpcs3.RPCS3
 
 git clone "https://github.com/zsh-users/zsh-autosuggestions.git" "/home/$USER/dots/tmp/zsh-autosuggestions/"
 git clone "https://github.com/zsh-users/zsh-syntax-highlighting.git" "/home/$USER/dots/tmp/zsh-syntax-highlighting/"
