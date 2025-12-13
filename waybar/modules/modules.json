@@ -2,18 +2,21 @@
 {"include": [                                   /////|                                                           
 "~/.config/waybar/modules/arch.json",           /////|                                                         
 "~/.config/waybar/modules/apps1.json",          /////|                                                         
+"~/.config/waybar/modules/games.json",          /////|                                                         
+"~/.config/waybar/modules/lutris.json",         /////|                                                         
+"~/.config/waybar/modules/retroarch.json",      /////|                                                         
+"~/.config/waybar/modules/steam.json",          /////|                                                         
 "~/.config/waybar/modules/workspaces.json",     /////|                                                        
 "~/.config/waybar/modules/quran.json",          /////|                                                        
 "~/.config/waybar/modules/sunnah.json",         /////|                                                        
 "~/.config/waybar/modules/aur.json",            /////|
 "~/.config/waybar/modules/salaat.json",         /////|
 "~/.config/waybar/modules/tray.json",           /////|
+"~/.config/waybar/modules/power.json",          /////|
 "~/.config/waybar/modules/shutdown.json",       /////|
 "~/.config/waybar/modules/restart.json",        /////|
 "~/.config/waybar/modules/lock.json",           /////|
 "~/.config/waybar/modules/clock.json",          /////|
-"~/.config/waybar/modules/clock-widget.json",   /////|
-"~/.config/waybar/modules/power.json",          /////|
 "~/.config/waybar/modules/net.json",            /////|
 "~/.config/waybar/modules/audio.json",],},      /////|
 /////////////////////////////////////////////////////|

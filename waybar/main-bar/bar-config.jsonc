@@ -2,13 +2,14 @@
 {"height": 30, "spacing": 4,                                                                         /////|  
 "margin-top": 0,                                                                                     /////|
 "margin-bottom": 0,                                                                                  /////|
+"layer": "bottom",                                                                                   /////|
 "margin-left": 5,                                                                                    /////|
 "margin-right": 5,                                                                                   /////|
 "include": ["~/.config/waybar/modules/modules.json"],                                                /////|
 //////////////////////////////////////////////////////////////////////////////////////////////////////////|
 
 //Modules Alignment///////////////////////////////////////////////////////////////////////////////////////|
-"modules-left": ["custom/arch","hyprland/workspaces","custom/aur","group/apps"],                     /////|
+"modules-left": ["custom/arch","hyprland/workspaces","custom/aur","group/apps","custom/games"],      /////|
 "modules-center": ["custom/quran","custom/salaat","custom/sunnah"],                                  /////|
 "modules-right": ["network","pulseaudio","clock","custom/power","tray"]}                             /////|
 //////////////////////////////////////////////////////////////////////////////////////////////////////////|

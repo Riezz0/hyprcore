@@ -1,9 +1,6 @@
 //Power///////////////////////////////////////////////////////////////////////////////////////////////////|
-{"custom/power": {"format": "<span font='25px'>󰐥</span>", "tooltip": false,                          /////|
-"on-click": "exec ~/.config/scripts/power.sh", "tooltip": true,                                                   /////|
-"tooltip-format": "Power Menu" }},                                                                   /////|
+{"custom/power": {"format": "   ", "tooltip": true,                                                  /////|
+"tooltip-format": "Toggle Power Menu",                                                               /////|
+"on-click": "~/.config/scripts/power.sh"}},                                                          /////|
 //////////////////////////////////////////////////////////////////////////////////////////////////////////|
-
-
-
 

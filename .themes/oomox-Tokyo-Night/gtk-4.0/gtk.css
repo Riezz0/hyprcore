@@ -2691,7 +2691,7 @@ searchbar > revealer > box .close:checked:hover, actionbar > revealer > box menu
 // Themix/Oomox theme:
 themixACCENT_BG: #f7768e;
 themixBG: #1a1b26;
-themixBTN_BG: #9ece6a;
+themixBTN_BG: #8db0ff;
 themixBTN_FG: #15161e;
 themixCARET1_FG: #a9b1d6;
 themixCARET2_FG: #a9b1d6;
@@ -2703,10 +2703,10 @@ themixHDR_FG: #a9b1d6;
 themixICONS_ARCHDROID: #e0af68;
 themixICONS_DARK: #1a1b26;
 themixICONS_LIGHT: #ff899d;
-themixICONS_LIGHT_FOLDER: #9ece6a;
-themixICONS_MEDIUM: #8db0ff;
-themixICONS_SYMBOLIC_ACTION: #bb9af7;
-themixICONS_SYMBOLIC_PANEL: #e0af68;
+themixICONS_LIGHT_FOLDER: #8db0ff;
+themixICONS_MEDIUM: #9ece6a;
+themixICONS_SYMBOLIC_ACTION: #767c97;
+themixICONS_SYMBOLIC_PANEL: #a9b1d6;
 themixMENU_BG: #15161e;
 themixMENU_FG: #a9b1d6;
 themixSEL_BG: #f7768e;
@@ -2718,7 +2718,7 @@ themixSURUPLUS_GRADIENT1: #767c97;
 themixSURUPLUS_GRADIENT2: #e0af68;
 themixTXT_BG: #1a1b26;
 themixTXT_FG: #a9b1d6;
-themixWM_BORDER_FOCUS: #9ece6a;
+themixWM_BORDER_FOCUS: #e0af68;
 themixWM_BORDER_UNFOCUS: #15161e;
 
 */
@@ -2843,7 +2843,7 @@ switch slider,
 .image-button,
 button.flat,
 button {
-    background-color: #9ece6a;
+    background-color: #8db0ff;
     color: #15161e;
 }
 
@@ -2966,7 +2966,7 @@ switch:hover slider,
 scale:hover trough slider,
 button.flat:hover,
 button:hover {
-    background-color: rgba(158, 206, 106, 0.8);
+    background-color: rgba(141, 176, 255, 0.8);
 }
 
 switch:checked > slider { background-color: #1a1b26; }
