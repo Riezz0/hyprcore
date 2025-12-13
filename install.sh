@@ -1,17 +1,6 @@
 #!/bin/bash
 
-if ! command -v yay &> /dev/null; then
-    log_substep "Installing yay..."
-    sudo pacman -S --needed --noconfirm git base-devel
-    git clone https://aur.archlinux.org/yay.git /tmp/yay
-    cd /tmp/yay && makepkg -si --noconfirm
-    cd ~
-    log_success "yay installed"
-else
-    log_success "yay already installed"
-fi
-
-yay -Syyu
+sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
 
 yay -S --needed --noconfirm \
     swww qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
