@@ -71,7 +71,18 @@ echo "Created/Verified HxA.conf file with window rules"
 
 hyprctl reload
 
-sudo pacman -S python-gobject xfce-polkit
+if ! command -v yay &> /dev/null; then
+    log_substep "Installing yay..."
+    sudo pacman -S --needed --noconfirm git base-devel
+    git clone https://aur.archlinux.org/yay.git /tmp/yay
+    cd /tmp/yay && makepkg -si --noconfirm
+    cd ~
+    log_success "yay installed"
+else
+    log_success "yay already installed"
+fi
+
+yay -S python-gobject xfce-polkit
 git clone https://github.com/Riezz0/hyprcore.git /home/$USER/dots/
 chmod +x /home/$USER/dots/HxA.py
 cd /home/$USER/dots/ 
