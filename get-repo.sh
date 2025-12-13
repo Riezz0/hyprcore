@@ -74,6 +74,6 @@ hyprctl reload
 
 sudo pacman -S python-gobject
 git clone https://github.com/Riezz0/hyprcore.git /home/$USER/dots/
-chmod +x /home/$USER/dots/Hxa.py
+chmod +x /home/$USER/dots/HxA.py
 cd /home/$USER/dots/ 
-python3 /home/$USER/dots/Hxa.py
+python3 /home/$USER/dots/HxA.py
