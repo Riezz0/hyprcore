@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/bin/bash
 
 # Configuration
 CONFIG_FILE="$HOME/.config/hypr/hyprland.conf"
@@ -72,7 +71,7 @@ echo "Created/Verified HxA.conf file with window rules"
 
 hyprctl reload
 
-sudo pacman -S python-gobject
+sudo pacman -S python-gobject xfce-polkit
 git clone https://github.com/Riezz0/hyprcore.git /home/$USER/dots/
 chmod +x /home/$USER/dots/HxA.py
 cd /home/$USER/dots/ 
