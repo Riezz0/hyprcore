@@ -1,9 +1,12 @@
 #!/bin/bash
 
-#YAY INSTALLATION
-sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
+#YAY INSTALLATION (ONLY INSTALL IF NOT INSTALLED)
+sudo pacman -S --needed --noconfim \
+  git base-devel \
+  && git clone https://aur.archlinux.org/yay.git \
+  && cd yay && makepkg -si
 
-#PKGS INSTALLATION
+#PKGS INSTALLATION (ONLY INSTALL PACKAGES THAT ARE NOT INSTALLED)
 yay -S --needed --noconfirm \
     swww qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
     hypridle hyprlock hyprpicker tree qt5ct qt6ct qt5-styleplugins \
@@ -16,7 +19,7 @@ yay -S --needed --noconfirm \
     flatpak python-pywal16 python-pywalfox make linux-firmware dkms \
     automake linux-zen-headers kvantum-qt5 chromium nemo-fileroller \
     waybar-module-pacman-updates-git coolercontrol-bin steam lutris \
-    python-geocoder scdoc \
+    python-geocoder scdoc bats \
 
 #MAKE DIRS
 mkdir -p /home/$USER/git /home/$USER/venv /home/$USER/tmp/
@@ -112,7 +115,12 @@ sudo cp -r /home/$USER/dots/sys/grub/grub /etc/default/
 sudo cp -r /home/$USER/dots/sys/grub/tokyo-night /usr/share/grub/themes/
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 
-#ARCH-UPDATE MODULE 
+#ARCH-UPDATE MODULE (ONLY INSTALL DEPENDENCIES IF NOT INSTALLED) 
+sudo pacman -S --needed --noconfirm \
+  bash systemd pacman pacman-contrib archlinux-contrib curl \
+  fakeroot htmlq diffutils hicolor-icon-theme python python-pyqt6 \
+  qt6-svg glib2 xdg-utils
+
 git clone "https://github.com/Antiz96/arch-update.git" "/home/$USER/arch-update/"
 cd /home/$USER/arch-update/
 make
